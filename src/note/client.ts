@@ -8,6 +8,8 @@ import type {
 } from './types.js';
 
 const BASE_URL = 'https://note.com/api';
+const EDITOR_ORIGIN = 'https://editor.note.com';
+const EDITOR_REFERER = 'https://editor.note.com/';
 const DEFAULT_USER_AGENT =
   'note-mcp/0.0.0 (+https://github.com/new-village/note-mcp)';
 
@@ -59,7 +61,13 @@ export class NoteClient {
   async createDraft(payload: Omit<DraftPayload, 'draftId'>): Promise<JsonValue> {
     const shell = await this.request('/v1/text_notes', {
       method: 'POST',
-      body: JSON.stringify({ name: payload.title, template_key: null }),
+      body: JSON.stringify({
+        body: '',
+        body_length: 0,
+        name: payload.title,
+        index: false,
+        is_lead_form: false,
+      }),
     });
     const draft = extractDraft(shell);
     const save = await this.saveDraft({ ...payload, draftId: String(draft.id) });
@@ -116,6 +124,12 @@ export class NoteClient {
 
     if (init.body && !headers.has('content-type')) {
       headers.set('content-type', 'application/json');
+    }
+
+    const method = init.method?.toUpperCase();
+    if (method === 'POST' || method === 'PUT') {
+      headers.set('origin', EDITOR_ORIGIN);
+      headers.set('referer', EDITOR_REFERER);
     }
 
     const response = await this.fetchImpl(`${BASE_URL}${path}`, {

@@ -232,7 +232,7 @@ note.com tools:
 - `note_list_drafts` — list drafts for the authenticated account via `GET /v2/note_list/contents?limit={limit}&page={page}&status=draft&without_magazines=true`. By default returns the full internal API payload. For LLM-friendly list views, pass `fields: "summary"` or `includeBody: false`.
 - `note_get_note` — fetch a note by note key, e.g. `n1a0b26f944f4`
 - `note_get_draft` — fetch authenticated draft detail by note key via `GET /v3/notes/{noteKey}?draft=true&draft_reedit=false`
-- `note_create_draft` — create a draft by first calling `POST /v1/text_notes` with `template_key: null` to obtain `data.id`/`data.key`, then saving content via `draft_save`
+- `note_create_draft` — create a draft by first calling `POST /v1/text_notes` with an empty-body editor payload to obtain `data.id`/`data.key`, then saving content via `draft_save`
 - `note_update_draft` — update a draft by numeric draft/note id
 - `note_publish_draft` — publish a draft by note key; internally resolves the numeric id from draft detail, then calls `PUT /v1/text_notes/{id}` with note.com's current publish payload
 - `note_delete_draft` — delete an unpublished draft by numeric draft/note id via `DELETE /v1/text_notes/draft_delete?id={draftId}`
@@ -253,7 +253,7 @@ Known endpoint basis:
 - Draft detail: `GET /v3/notes/{noteKey}?draft=true&draft_reedit=false&ts={timestamp}`
 - Authenticated note list: `GET /v2/note_list/contents?limit=20&page=1`
 - Authenticated draft list: `GET /v2/note_list/contents?limit=20&page=1&status=draft&without_magazines=true`
-- Draft shell create/id lookup: `POST /v1/text_notes` with `{ "name": "...", "template_key": null }`; response includes numeric `data.id` and note `data.key`
+- Draft shell create/id lookup: `POST /v1/text_notes` with `{ "body": "", "body_length": 0, "name": "...", "index": false, "is_lead_form": false }`; response includes numeric `data.id` and note `data.key`. Mutating editor requests should include `Origin: https://editor.note.com`, `Referer: https://editor.note.com/`, `X-Requested-With: XMLHttpRequest`, and `Content-Type: application/json`.
 - Draft save/update: `POST /v1/text_notes/draft_save?id={draftId}&is_temp_saved=true` with `body`, `body_length`, `name`, `index`, and `is_lead_form`
 - Draft publish: `PUT /v1/text_notes/{draftId}` with `free_body`, `pay_body`, `body_length`, and `status: "published"`
 - Draft delete: `DELETE /v1/text_notes/draft_delete?id={draftId}`

@@ -62,9 +62,15 @@ describe('NoteClient', () => {
     expect(fetchMock.calls[0]?.[0]).toBe('https://note.com/api/v1/text_notes');
     expect(fetchMock.calls[0]?.[1]?.method).toBe('POST');
     expect(JSON.parse(fetchMock.calls[0]?.[1]?.body as string)).toEqual({
+      body: '',
+      body_length: 0,
       name: 't',
-      template_key: null,
+      index: false,
+      is_lead_form: false,
     });
+    const createHeaders = fetchMock.calls[0]?.[1]?.headers as Headers;
+    expect(createHeaders.get('origin')).toBe('https://editor.note.com');
+    expect(createHeaders.get('referer')).toBe('https://editor.note.com/');
     expect(fetchMock.calls[1]?.[0]).toBe(
       'https://note.com/api/v1/text_notes/draft_save?id=123&is_temp_saved=true',
     );
@@ -75,6 +81,9 @@ describe('NoteClient', () => {
       index: false,
       is_lead_form: false,
     });
+    const saveHeaders = fetchMock.calls[1]?.[1]?.headers as Headers;
+    expect(saveHeaders.get('origin')).toBe('https://editor.note.com');
+    expect(saveHeaders.get('referer')).toBe('https://editor.note.com/');
   });
 
   it('builds the draft save endpoint for updates', async () => {
@@ -88,6 +97,9 @@ describe('NoteClient', () => {
     );
     const init = fetchMock.calls[0]?.[1];
     expect(init?.method).toBe('POST');
+    const headers = init?.headers as Headers;
+    expect(headers.get('origin')).toBe('https://editor.note.com');
+    expect(headers.get('referer')).toBe('https://editor.note.com/');
     expect(JSON.parse(init?.body as string)).toEqual({
       body: '<p>b</p>',
       body_length: 1,
@@ -146,6 +158,9 @@ describe('NoteClient', () => {
 
     expect(fetchMock.calls[1]?.[0]).toBe('https://note.com/api/v1/text_notes/123');
     expect(fetchMock.calls[1]?.[1]?.method).toBe('PUT');
+    const publishHeaders = fetchMock.calls[1]?.[1]?.headers as Headers;
+    expect(publishHeaders.get('origin')).toBe('https://editor.note.com');
+    expect(publishHeaders.get('referer')).toBe('https://editor.note.com/');
     expect(JSON.parse(fetchMock.calls[1]?.[1]?.body as string)).toMatchObject({
       body_length: 1,
       free_body: '<p>b</p>',
