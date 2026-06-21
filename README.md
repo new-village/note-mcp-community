@@ -78,6 +78,20 @@ This opens a browser, lets you log in to note.com normally, then stores note.com
 ~/.config/note-mcp/config.json
 ```
 
+If the browser executable is not installed yet, install Playwright's Chromium once on the same machine/user account, then retry:
+
+```bash
+npx playwright install chromium
+```
+
+When using `note-mcp` only through `npx` and Playwright is not otherwise installed globally/in the project, this form is often more reliable:
+
+```bash
+npx -p playwright playwright install chromium
+```
+
+For remote servers, containers, or CI, prefer the secret/env/config-file path below instead of browser login.
+
 The config file is written with `0600` permissions where supported.
 
 Useful CLI commands:

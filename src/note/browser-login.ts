@@ -34,7 +34,12 @@ export async function runBrowserLogin(options: BrowserLoginOptions = {}): Promis
   const timeoutMs = options.timeoutMs ?? 180_000;
   const headless = options.headless ?? process.env.NOTE_MCP_HEADLESS === 'true';
   const { chromium } = await importPlaywright();
-  const browser = await chromium.launch({ headless });
+  let browser;
+  try {
+    browser = await chromium.launch({ headless });
+  } catch (error) {
+    throw toBrowserLoginError(error);
+  }
 
   try {
     const context = await browser.newContext();
@@ -82,6 +87,28 @@ async function importPlaywright(): Promise<typeof import('playwright')> {
       `Browser login requires the optional "playwright" package and a usable desktop browser environment. Original error: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+export function toBrowserLoginError(error: unknown): Error {
+  const message = error instanceof Error ? error.message : String(error);
+  if (
+    message.includes("Executable doesn't exist") ||
+    message.includes('Please run the following command to download new browsers') ||
+    message.includes('playwright install')
+  ) {
+    return new Error(
+      [
+        'Playwright browser is not installed, so note-mcp cannot open the note.com browser login flow.',
+        'Run this once on the same machine/user account, then retry:',
+        '  npx playwright install chromium',
+        'If you are running note-mcp through npx and Playwright is not otherwise installed, use:',
+        '  npx -p playwright playwright install chromium',
+        'For remote servers, containers, or CI, prefer NOTE_COOKIE / NOTE_SESSION_COOKIE or NOTE_MCP_CONFIG instead of browser login.',
+      ].join('\n'),
+    );
+  }
+
+  return error instanceof Error ? error : new Error(message);
 }
 
 function isNoteDomain(domain: string): boolean {

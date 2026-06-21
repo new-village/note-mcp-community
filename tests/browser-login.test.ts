@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { cookiesToHeader } from '../src/note/browser-login.js';
+import { cookiesToHeader, toBrowserLoginError } from '../src/note/browser-login.js';
 
 describe('cookiesToHeader', () => {
   it('serializes note.com cookies into a Cookie header', () => {
@@ -17,5 +17,19 @@ describe('cookiesToHeader', () => {
     expect(() => cookiesToHeader([{ name: 'other', value: 'def', domain: 'example.com' }])).toThrow(
       /No note\.com cookies/,
     );
+  });
+});
+
+describe('toBrowserLoginError', () => {
+  it('turns missing Playwright browser errors into actionable install guidance', () => {
+    const error = toBrowserLoginError(
+      new Error(
+        'browserType.launch: Executable doesn\'t exist at /Users/new-village/Library/Caches/ms-playwright/chromium-1228/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing\nPlease run the following command to download new browsers:\n    npx playwright install',
+      ),
+    );
+
+    expect(error.message).toContain('Playwright browser is not installed');
+    expect(error.message).toContain('npx playwright install chromium');
+    expect(error.message).not.toContain('/Users/new-village');
   });
 });
