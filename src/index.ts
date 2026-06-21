@@ -16,6 +16,9 @@ import { NoteApiError, toErrorMessage } from './note/errors.js';
 import type { JsonValue } from './note/types.js';
 import { getPackageVersion } from './version.js';
 
+const NOTE_BODY_DESCRIPTION =
+  'Article body as note-compatible HTML. Markdown is not rendered automatically by note.com; callers should convert Markdown to HTML before passing it.';
+
 if (process.argv[2] === 'auth') {
   await runAuthCli(process.argv.slice(3));
 } else {
@@ -208,10 +211,10 @@ async function runMcpServer(): Promise<void> {
     {
       title: 'Create note.com draft',
       description:
-        'Creates a note.com draft with title/body/hashtags using an unofficial internal API.',
+        'Creates a note.com draft with title/body/hashtags using an unofficial internal API. The body should be HTML compatible with note.com editor content. Do not pass Markdown if visual formatting is expected; convert Markdown to HTML before calling this tool.',
       inputSchema: {
         title: z.string().min(1),
-        body: z.string().min(1),
+        body: z.string().min(1).describe(NOTE_BODY_DESCRIPTION),
         hashtags: z.array(z.string().min(1)).optional(),
       },
     },
@@ -230,11 +233,11 @@ async function runMcpServer(): Promise<void> {
     {
       title: 'Update note.com draft',
       description:
-        'Updates a note.com draft by numeric draft/note id via POST /v1/text_notes/draft_save?id={draftId}&is_temp_saved=true.',
+        'Updates a note.com draft by numeric draft/note id via POST /v1/text_notes/draft_save?id={draftId}&is_temp_saved=true. The body should be HTML compatible with note.com editor content. Do not pass Markdown if visual formatting is expected; convert Markdown to HTML before calling this tool.',
       inputSchema: {
         draftId: z.string().min(1),
         title: z.string().min(1),
-        body: z.string().min(1),
+        body: z.string().min(1).describe(NOTE_BODY_DESCRIPTION),
         hashtags: z.array(z.string().min(1)).optional(),
       },
     },
@@ -254,7 +257,7 @@ async function runMcpServer(): Promise<void> {
     {
       title: 'Publish note.com draft',
       description:
-        'Publishes a draft by note key. Internally fetches draft detail via /v3/notes/{noteKey}?draft=true, then publishes with PUT /v1/text_notes/{id}.',
+        'Publishes a draft by note key. Internally fetches draft detail via /v3/notes/{noteKey}?draft=true, then publishes with PUT /v1/text_notes/{id}. The saved draft body is sent to note.com as editor HTML; Markdown is not converted during publish.',
       inputSchema: {
         noteKey: z.string().min(1),
       },

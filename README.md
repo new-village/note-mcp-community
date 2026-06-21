@@ -240,6 +240,31 @@ note.com tools:
 
 If authentication is missing, note tools return an `auth_required` error suggesting `note_auth_login` or `note_set_cookie`.
 
+### Body format for AI agents
+
+`note_create_draft` and `note_update_draft` send `body` directly to note.com's internal editor API. note.com does not automatically render Markdown in this field.
+
+If you want headings, lists, links, or emphasis to appear formatted, pass note-compatible HTML:
+
+```html
+<h2>テスト内容</h2>
+<ul>
+  <li>下書き作成</li>
+  <li>公開</li>
+</ul>
+```
+
+Do not pass Markdown if visual formatting is expected:
+
+```markdown
+## テスト内容
+
+- 下書き作成
+- 公開
+```
+
+AI agents should generate or convert content to note-compatible HTML before calling the tool. `note-mcp` intentionally stays a thin bridge to note.com's API; Markdown-to-HTML conversion belongs in the caller or a future optional helper, not in the core draft tools.
+
 ## API basis
 
 The initial endpoints are based on public, unofficial note API references, including:
