@@ -20,3 +20,8 @@ export interface DraftPayload {
   hashtags?: string[];
   draftId?: string;
 }
+
+export interface ListMyNotesOptions {
+  fields?: 'full' | 'summary';
+  includeBody?: boolean | undefined;
+}

@@ -147,12 +147,16 @@ async function runMcpServer(): Promise<void> {
     'note_list_my_notes',
     {
       title: 'List my note.com notes',
-      description: 'Lists notes for the authenticated note.com account.',
+      description:
+        'Lists creator contents for the authenticated note.com account via GET /v2/creators/info/contents?kind=note. By default returns the full internal API payload; pass fields: "summary" or includeBody: false for a lightweight list with title/key/url/publishAt/status/likeCount.',
       inputSchema: {
         page: z.number().int().positive().default(1),
+        fields: z.enum(['full', 'summary']).default('full'),
+        includeBody: z.boolean().optional(),
       },
     },
-    async ({ page }) => withClient((client) => client.listMyNotes(page)),
+    async ({ page, fields, includeBody }) =>
+      withClient((client) => client.listMyNotes(page, { fields, includeBody })),
   );
 
   server.registerTool(

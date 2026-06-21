@@ -1,5 +1,11 @@
 import { NoteApiError } from './errors.js';
-import type { DraftPayload, FetchLike, JsonValue, NoteClientOptions } from './types.js';
+import type {
+  DraftPayload,
+  FetchLike,
+  JsonValue,
+  ListMyNotesOptions,
+  NoteClientOptions,
+} from './types.js';
 
 const BASE_URL = 'https://note.com/api';
 const DEFAULT_USER_AGENT =
@@ -20,8 +26,12 @@ export class NoteClient {
     return this.request('/v3/notice_counts');
   }
 
-  async listMyNotes(page = 1): Promise<JsonValue> {
-    return this.request(`/v2/creators/info/contents?kind=note&page=${page}`);
+  async listMyNotes(page = 1, options: ListMyNotesOptions = {}): Promise<JsonValue> {
+    const payload = await this.request(`/v2/creators/info/contents?kind=note&page=${page}`);
+    if (options.fields === 'summary' || options.includeBody === false) {
+      return summarizeListPayload(payload);
+    }
+    return payload;
   }
 
   async listDrafts(page = 1): Promise<JsonValue> {
@@ -80,6 +90,65 @@ export class NoteClient {
 
     return body;
   }
+}
+
+function summarizeListPayload(payload: JsonValue): JsonValue {
+  if (!isJsonObject(payload)) return payload;
+
+  if (isJsonObject(payload.data) && Array.isArray(payload.data.contents)) {
+    return {
+      ...payload,
+      data: {
+        ...payload.data,
+        contents: payload.data.contents.map(summarizeNoteItem),
+      },
+    };
+  }
+
+  if (Array.isArray(payload.contents)) {
+    return {
+      ...payload,
+      contents: payload.contents.map(summarizeNoteItem),
+    };
+  }
+
+  return payload;
+}
+
+function summarizeNoteItem(item: JsonValue): JsonValue {
+  if (!isJsonObject(item)) return item;
+
+  const key = firstString(item.key, item.noteKey, item.id);
+  return omitUndefined({
+    key,
+    title: firstString(item.title, item.name),
+    url: firstString(item.url, item.noteUrl, item.note_url, item.path) ?? noteUrl(key),
+    publishAt: firstDefined(item.publishAt, item.publish_at, item.publishedAt, item.published_at),
+    status: item.status,
+    likeCount: firstDefined(item.likeCount, item.like_count),
+  });
+}
+
+function firstDefined(...values: Array<JsonValue | undefined>): JsonValue | undefined {
+  return values.find((value) => value !== undefined);
+}
+
+function firstString(...values: Array<JsonValue | undefined>): string | undefined {
+  return values.find((value): value is string => typeof value === 'string' && value.length > 0);
+}
+
+function noteUrl(key: string | undefined): string | undefined {
+  return key ? `https://note.com/notes/${key}` : undefined;
+}
+
+function omitUndefined(record: Record<string, JsonValue | undefined>): { [key: string]: JsonValue } {
+  return Object.fromEntries(
+    Object.entries(record).filter((entry): entry is [string, JsonValue] => entry[1] !== undefined),
+  );
+}
+
+function isJsonObject(value: unknown): value is { [key: string]: JsonValue } {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 async function parseBody(response: Response): Promise<JsonValue> {

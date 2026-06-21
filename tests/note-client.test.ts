@@ -63,6 +63,79 @@ describe('NoteClient', () => {
     });
   });
 
+  it('returns a summary-only my notes payload when includeBody is false', async () => {
+    const fetchMock = mockFetch(async () =>
+      response({
+        data: {
+          contents: [
+            {
+              key: 'nabc123',
+              name: 'First note',
+              body: '<p>long body</p>',
+              publishAt: '2026-06-21T00:00:00+09:00',
+              status: 'published',
+              likeCount: 12,
+              extra: 'large-field',
+            },
+          ],
+          totalCount: 1,
+        },
+      }),
+    );
+    const client = new NoteClient({ cookie: 'sid=abc', fetch: fetchMock });
+
+    await expect(client.listMyNotes(1, { includeBody: false })).resolves.toEqual({
+      data: {
+        contents: [
+          {
+            key: 'nabc123',
+            title: 'First note',
+            url: 'https://note.com/notes/nabc123',
+            publishAt: '2026-06-21T00:00:00+09:00',
+            status: 'published',
+            likeCount: 12,
+          },
+        ],
+        totalCount: 1,
+      },
+    });
+  });
+
+  it('treats fields summary as summary-only my notes output', async () => {
+    const fetchMock = mockFetch(async () =>
+      response({
+        data: {
+          contents: [
+            {
+              noteKey: 'ndef456',
+              title: 'Second note',
+              body: 'long body',
+              publishAt: null,
+              status: 'draft',
+              likeCount: 0,
+            },
+          ],
+        },
+      }),
+    );
+    const client = new NoteClient({ cookie: 'sid=abc', fetch: fetchMock });
+
+    await expect(client.listMyNotes(1, { fields: 'summary' })).resolves.toEqual({
+      data: {
+        contents: [
+          {
+            key: 'ndef456',
+            title: 'Second note',
+            url: 'https://note.com/notes/ndef456',
+            publishAt: null,
+            status: 'draft',
+            likeCount: 0,
+          },
+        ],
+      },
+    });
+  });
+
   it('throws NoteApiError for non-2xx responses', async () => {
     const fetchMock = mockFetch(async () => response({ error: 'unauthorized' }, { status: 401 }));
     const client = new NoteClient({ cookie: 'bad', fetch: fetchMock });

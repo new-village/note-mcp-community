@@ -40,6 +40,16 @@ Then configure your MCP client without putting cookies in the config:
 }
 ```
 
+Some MCP clients only load newly added tools when a process or conversation starts. After authentication or config changes, restart the client or open a new thread/session if `note_*` tools do not appear immediately.
+
+Quick setup check:
+
+1. `npx note-mcp auth`
+2. `npx note-mcp auth --status`
+3. Add `npx -y note-mcp` to your MCP client config
+4. Restart the client or open a new thread/session
+5. Run `note_auth_status` from the MCP client
+
 ### Servers, containers, and CI
 
 Do not rely on browser login in headless/container environments. Provide a cookie through env or a mounted config file instead:
@@ -101,6 +111,26 @@ Advanced env-based setup:
   }
 }
 ```
+
+### Codex CLI
+
+For Codex, add `note-mcp` as a stdio MCP server with `npx`:
+
+```bash
+codex mcp add note -- npx -y note-mcp
+codex mcp list
+npx -y note-mcp auth --status
+```
+
+Recommended verification flow:
+
+1. `npx note-mcp auth`
+2. `npx note-mcp auth --status`
+3. `codex mcp add note -- npx -y note-mcp`
+4. Restart Codex or create a new thread
+5. Run `note_auth_status`
+
+If the server is listed but `note_*` tools are not available in the current thread, restart Codex or start a new thread so the MCP tools are loaded from the new configuration.
 
 ## Authentication
 
@@ -198,7 +228,7 @@ Authentication/setup tools:
 note.com tools:
 
 - `note_auth_check` — verify configured cookie-based access to note.com internal APIs
-- `note_list_my_notes` — list notes for the authenticated account
+- `note_list_my_notes` — list creator contents for the authenticated account via `GET /v2/creators/info/contents?kind=note&page={page}`. By default returns the full internal API payload. For LLM-friendly list views, pass `fields: "summary"` or `includeBody: false` to return summary fields such as `title`, `key`, `url`, `publishAt`, `status`, and `likeCount`.
 - `note_list_drafts` — list drafts for the authenticated account
 - `note_get_note` — fetch a note by note key, e.g. `n1a0b26f944f4`
 - `note_create_draft` — create a draft
@@ -216,9 +246,11 @@ Known endpoint basis:
 
 - Base URL: `https://note.com/api`
 - Note detail: `GET /v3/notes/{noteKey}`
-- Own contents: `GET /v2/creators/info/contents?kind=note&page=1`
+- Authenticated creator contents: `GET /v2/creators/info/contents?kind=note&page=1`
 - Draft save: `POST /v1/text_notes/draft_save?id={draftId}`
 - Auth smoke test: `GET /v3/notice_counts`
+
+`note_list_my_notes` intentionally exposes the authenticated creator contents endpoint above. The exact visibility and shape are determined by note.com's internal API response for the configured cookie; use the default full response when debugging endpoint behavior, and use summary mode when a compact list is enough.
 
 ## Release
 
