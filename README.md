@@ -229,7 +229,7 @@ note.com tools:
 
 - `note_auth_check` — verify configured cookie-based access to note.com internal APIs
 - `note_list_my_notes` — list notes for the authenticated account via `GET /v2/note_list/contents?limit={limit}&page={page}`. By default returns the full internal API payload. For LLM-friendly list views, pass `fields: "summary"` or `includeBody: false` to return summary fields such as `title`, `key`, `url`, `publishAt`, `status`, `likeCount`, and `isAuthor`.
-- `note_list_drafts` — list drafts for the authenticated account
+- `note_list_drafts` — list drafts for the authenticated account via `GET /v2/note_list/contents?limit={limit}&page={page}&status=draft&without_magazines=true`. By default returns the full internal API payload. For LLM-friendly list views, pass `fields: "summary"` or `includeBody: false`.
 - `note_get_note` — fetch a note by note key, e.g. `n1a0b26f944f4`
 - `note_create_draft` — create a draft
 - `note_update_draft` — update a draft by draft id
@@ -247,10 +247,11 @@ Known endpoint basis:
 - Base URL: `https://note.com/api`
 - Note detail: `GET /v3/notes/{noteKey}`
 - Authenticated note list: `GET /v2/note_list/contents?limit=20&page=1`
+- Authenticated draft list: `GET /v2/note_list/contents?limit=20&page=1&status=draft&without_magazines=true`
 - Draft save: `POST /v1/text_notes/draft_save?id={draftId}`
 - Auth smoke test: `GET /v3/notice_counts`
 
-`note_list_my_notes` intentionally exposes the authenticated note list endpoint above. The response shape is determined by note.com's internal API and typically returns items under `data.notes`; use the default full response when debugging endpoint behavior, and use summary mode when a compact list is enough.
+`note_list_my_notes` and `note_list_drafts` intentionally expose the authenticated note list endpoints above. The response shape is determined by note.com's internal API and typically returns items under `data.notes`; use the default full response when debugging endpoint behavior, and use summary mode when a compact list is enough. Summary mode does not invent public URLs for drafts unless note.com returns an explicit URL/path.
 
 ## Release
 

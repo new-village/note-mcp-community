@@ -167,7 +167,6 @@ describe('NoteClient', () => {
           {
             key: 'ndef456',
             title: 'Second note',
-            url: 'https://note.com/notes/ndef456',
             publishAt: null,
             status: 'draft',
             likeCount: 0,
@@ -175,6 +174,44 @@ describe('NoteClient', () => {
         ],
       },
     });
+  });
+
+  it('lists drafts from the current note_list draft endpoint', async () => {
+    const fetchMock = mockFetch(async () =>
+      response({
+        data: {
+          notes: [
+            {
+              key: 'ndraft123',
+              name: null,
+              status: 'draft',
+              publishAt: null,
+              likeCount: 0,
+              isAuthor: true,
+              body: 'draft body',
+            },
+          ],
+        },
+      }),
+    );
+    const client = new NoteClient({ cookie: 'sid=abc', fetch: fetchMock });
+
+    await expect(client.listDrafts(1, { fields: 'summary' })).resolves.toEqual({
+      data: {
+        notes: [
+          {
+            key: 'ndraft123',
+            status: 'draft',
+            publishAt: null,
+            likeCount: 0,
+            isAuthor: true,
+          },
+        ],
+      },
+    });
+    expect(fetchMock.calls[0]?.[0]).toBe(
+      'https://note.com/api/v2/note_list/contents?limit=20&page=1&status=draft&without_magazines=true',
+    );
   });
 
   it('throws NoteApiError for non-2xx responses', async () => {

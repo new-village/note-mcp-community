@@ -166,12 +166,16 @@ async function runMcpServer(): Promise<void> {
     {
       title: 'List note.com drafts',
       description:
-        'Lists drafts for the authenticated note.com account. This uses an unofficial internal API and may need adjustment if note.com changes endpoints.',
+        'Lists drafts for the authenticated note.com account via GET /v2/note_list/contents?limit=20&page=1&status=draft&without_magazines=true. By default returns the full internal API payload; pass fields: "summary" or includeBody: false for a lightweight list.',
       inputSchema: {
         page: z.number().int().positive().default(1),
+        limit: z.number().int().positive().default(20),
+        fields: z.enum(['full', 'summary']).default('full'),
+        includeBody: z.boolean().optional(),
       },
     },
-    async ({ page }) => withClient((client) => client.listDrafts(page)),
+    async ({ page, limit, fields, includeBody }) =>
+      withClient((client) => client.listDrafts(page, { limit, fields, includeBody })),
   );
 
   server.registerTool(

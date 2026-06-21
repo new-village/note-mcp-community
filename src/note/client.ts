@@ -35,9 +35,15 @@ export class NoteClient {
     return payload;
   }
 
-  async listDrafts(page = 1): Promise<JsonValue> {
-    // note.com uses internal APIs; this endpoint shape follows the creator contents API.
-    return this.request(`/v2/creators/info/contents?kind=draft&page=${page}`);
+  async listDrafts(page = 1, options: ListMyNotesOptions = {}): Promise<JsonValue> {
+    const limit = options.limit ?? 20;
+    const payload = await this.request(
+      `/v2/note_list/contents?limit=${limit}&page=${page}&status=draft&without_magazines=true`,
+    );
+    if (options.fields === 'summary' || options.includeBody === false) {
+      return summarizeListPayload(payload);
+    }
+    return payload;
   }
 
   async getNote(noteKey: string): Promise<JsonValue> {
@@ -133,7 +139,8 @@ function summarizeNoteItem(item: JsonValue): JsonValue {
   return omitUndefined({
     key,
     title: firstString(item.title, item.name),
-    url: firstString(item.url, item.noteUrl, item.note_url, item.path) ?? noteUrl(key, item.user),
+    url:
+      firstString(item.url, item.noteUrl, item.note_url, item.path) ?? noteUrl(key, item.user, item.status),
     publishAt: firstDefined(item.publishAt, item.publish_at, item.publishedAt, item.published_at),
     status: item.status,
     likeCount: firstDefined(item.likeCount, item.like_count),
@@ -149,8 +156,12 @@ function firstString(...values: Array<JsonValue | undefined>): string | undefine
   return values.find((value): value is string => typeof value === 'string' && value.length > 0);
 }
 
-function noteUrl(key: string | undefined, user: JsonValue | undefined): string | undefined {
-  if (!key) return undefined;
+function noteUrl(
+  key: string | undefined,
+  user: JsonValue | undefined,
+  status: JsonValue | undefined,
+): string | undefined {
+  if (!key || status === 'draft') return undefined;
   if (isJsonObject(user)) {
     const urlname = firstString(user.urlname);
     if (urlname) return `https://note.com/${urlname}/n/${key}`;
