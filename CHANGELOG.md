@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/new-village/note-mcp/compare/v1.2.0...v1.2.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* report package version in server info ([53f3635](https://github.com/new-village/note-mcp/commit/53f3635632a2d8fe66cb817271d9c09953edafb4))
+
 # [1.2.0](https://github.com/new-village/note-mcp/compare/v1.1.2...v1.2.0) (2026-06-21)
 
 
