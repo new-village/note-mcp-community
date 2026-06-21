@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/new-village/note-mcp/compare/v1.3.0...v1.3.1) (2026-06-21)
+
+
+### Bug Fixes
+
+* create drafts with editor payload ([34d35b1](https://github.com/new-village/note-mcp/commit/34d35b17568fe6ee7eaa80a938203363673ebe5f))
+
 # [1.3.0](https://github.com/new-village/note-mcp/compare/v1.2.3...v1.3.0) (2026-06-21)
 
 
