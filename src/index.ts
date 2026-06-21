@@ -1,7 +1,7 @@
 #!/usr/bin/env node
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
 
 import {
   AuthRequiredError,
@@ -9,18 +9,18 @@ import {
   clearStoredCookie,
   readCookie,
   saveCookie,
-} from './note/auth.js';
-import { runBrowserLogin } from './note/browser-login.js';
-import { NoteClient } from './note/client.js';
-import { NoteApiError, toErrorMessage } from './note/errors.js';
-import type { JsonValue } from './note/types.js';
-import { getPackageVersion } from './version.js';
+} from "./note/auth.js";
+import { runBrowserLogin } from "./note/browser-login.js";
+import { NoteClient } from "./note/client.js";
+import { NoteApiError, toErrorMessage } from "./note/errors.js";
+import type { JsonValue } from "./note/types.js";
+import { getPackageVersion } from "./version.js";
 
 const NOTE_BODY_DESCRIPTION =
-  'Article body as note-compatible HTML. Markdown is not rendered automatically by note.com; callers should convert Markdown to HTML before passing it.';
-const RESPONSE_FORMAT_SCHEMA = z.enum(['summary', 'full']).default('summary');
+  "Article body as note-compatible HTML. Markdown is not rendered automatically by note.com; callers should convert Markdown to HTML before passing it.";
+const RESPONSE_FORMAT_SCHEMA = z.enum(["summary", "full"]).default("summary");
 
-if (process.argv[2] === 'auth') {
+if (process.argv[2] === "auth") {
   await runAuthCli(process.argv.slice(3));
 } else {
   await runMcpServer();
@@ -28,19 +28,29 @@ if (process.argv[2] === 'auth') {
 
 async function runAuthCli(args: string[]): Promise<void> {
   try {
-    if (args.includes('--status')) {
+    if (args.includes("--status")) {
       console.log(jsonText(await authStatus()));
       return;
     }
 
-    if (args.includes('--clear')) {
+    if (args.includes("--clear")) {
       console.log(jsonText(await clearStoredCookie()));
       return;
     }
 
-    const headless = args.includes('--headless') ? true : args.includes('--headed') ? false : undefined;
-    console.error('Opening note.com login in a browser. Complete login there; note-mcp will save cookies locally.');
-    console.log(jsonText(await runBrowserLogin(headless === undefined ? {} : { headless })));
+    const headless = args.includes("--headless")
+      ? true
+      : args.includes("--headed")
+        ? false
+        : undefined;
+    console.error(
+      "Opening note.com login in a browser. Complete login there; note-mcp-community will save cookies locally.",
+    );
+    console.log(
+      jsonText(
+        await runBrowserLogin(headless === undefined ? {} : { headless }),
+      ),
+    );
   } catch (error) {
     console.error(jsonText(errorDetail(error)));
     process.exitCode = 1;
@@ -49,33 +59,38 @@ async function runAuthCli(args: string[]): Promise<void> {
 
 async function runMcpServer(): Promise<void> {
   const server = new McpServer({
-    name: 'note-mcp',
+    name: "note-mcp-community",
     version: getPackageVersion(),
   });
 
   server.registerTool(
-    'note_auth_status',
+    "note_auth_status",
     {
-      title: 'Get note.com authentication status',
-      description: 'Checks whether note-mcp has a note.com cookie from env or config file.',
+      title: "Get note.com authentication status",
+      description:
+        "Checks whether note-mcp-community has a note.com cookie from env or config file.",
       inputSchema: {},
     },
     async () => result(await authStatus()),
   );
 
   server.registerTool(
-    'note_auth_login',
+    "note_auth_login",
     {
-      title: 'Log in to note.com with a browser',
+      title: "Log in to note.com with a browser",
       description:
-        'Opens a local Playwright browser login flow and saves note.com cookies to the note-mcp config file. Intended for desktop/local agents; remote/headless servers should use env or note_set_cookie.',
+        "Opens a local Playwright browser login flow and saves note.com cookies to the note-mcp-community config file. Intended for desktop/local agents; remote/headless servers should use env or note_set_cookie.",
       inputSchema: {
         headless: z.boolean().optional(),
       },
     },
     async ({ headless }) => {
       try {
-        return result(await runBrowserLogin({ ...(headless === undefined ? {} : { headless }) }));
+        return result(
+          await runBrowserLogin({
+            ...(headless === undefined ? {} : { headless }),
+          }),
+        );
       } catch (error) {
         return errorResult(error);
       }
@@ -83,11 +98,11 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_set_cookie',
+    "note_set_cookie",
     {
-      title: 'Set note.com cookie',
+      title: "Set note.com cookie",
       description:
-        'Stores a note.com Cookie header in the local note-mcp config file. By default, verifies the cookie before saving.',
+        "Stores a note.com Cookie header in the local note-mcp-community config file. By default, verifies the cookie before saving.",
       inputSchema: {
         cookie: z.string().min(1),
         verify: z.boolean().default(true),
@@ -106,10 +121,11 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_clear_cookie',
+    "note_clear_cookie",
     {
-      title: 'Clear stored note.com cookie',
-      description: 'Deletes the note-mcp config file cookie. Environment cookies are not modified.',
+      title: "Clear stored note.com cookie",
+      description:
+        "Deletes the note-mcp-community config file cookie. Environment cookies are not modified.",
       inputSchema: {},
     },
     async () => {
@@ -122,71 +138,82 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_login_help',
+    "note_login_help",
     {
-      title: 'Get note-mcp login help',
-      description: 'Explains the supported note-mcp authentication setup paths.',
+      title: "Get note-mcp-community login help",
+      description:
+        "Explains the supported note-mcp-community authentication setup paths.",
       inputSchema: {},
     },
     async () =>
       result({
-        recommended: 'For local/desktop agents, call note_auth_login to open a browser login flow.',
+        recommended:
+          "For local/desktop agents, call note_auth_login to open a browser login flow.",
         advanced:
-          'For servers/CI, provide NOTE_COOKIE / NOTE_SESSION_COOKIE or call note_set_cookie with a Cookie header obtained by a trusted operator.',
+          "For servers/CI, provide NOTE_COOKIE / NOTE_SESSION_COOKIE or call note_set_cookie with a Cookie header obtained by a trusted operator.",
         configFile: (await authStatus()).configPath,
-        cli: ['npx note-mcp auth', 'npx note-mcp auth --status', 'npx note-mcp auth --clear'],
+        cli: [
+          "npx note-mcp-community auth",
+          "npx note-mcp-community auth --status",
+          "npx note-mcp-community auth --clear",
+        ],
       }),
   );
 
   server.registerTool(
-    'note_auth_check',
+    "note_auth_check",
     {
-      title: 'Check note.com authentication',
-      description: 'Checks whether configured note.com cookies can access note.com internal APIs.',
+      title: "Check note.com authentication",
+      description:
+        "Checks whether configured note.com cookies can access note.com internal APIs.",
       inputSchema: {},
     },
     async () => withClient((client) => client.authCheck()),
   );
 
   server.registerTool(
-    'note_list_my_notes',
+    "note_list_my_notes",
     {
-      title: 'List my note.com notes',
+      title: "List my note.com notes",
       description:
         'Lists notes for the authenticated note.com account via GET /v2/note_list/contents?limit=20&page=1. By default returns the full internal API payload; pass fields: "summary" or includeBody: false for a lightweight list with title/key/url/publishAt/status/likeCount/isAuthor.',
       inputSchema: {
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().default(20),
-        fields: z.enum(['full', 'summary']).default('full'),
+        fields: z.enum(["full", "summary"]).default("full"),
         includeBody: z.boolean().optional(),
       },
     },
     async ({ page, limit, fields, includeBody }) =>
-      withClient((client) => client.listMyNotes(page, { limit, fields, includeBody })),
+      withClient((client) =>
+        client.listMyNotes(page, { limit, fields, includeBody }),
+      ),
   );
 
   server.registerTool(
-    'note_list_drafts',
+    "note_list_drafts",
     {
-      title: 'List note.com drafts',
+      title: "List note.com drafts",
       description:
         'Lists drafts for the authenticated note.com account via GET /v2/note_list/contents?limit=20&page=1&status=draft&without_magazines=true. By default returns the full internal API payload; pass fields: "summary" or includeBody: false for a lightweight list.',
       inputSchema: {
         page: z.number().int().positive().default(1),
         limit: z.number().int().positive().default(20),
-        fields: z.enum(['full', 'summary']).default('full'),
+        fields: z.enum(["full", "summary"]).default("full"),
         includeBody: z.boolean().optional(),
       },
     },
     async ({ page, limit, fields, includeBody }) =>
-      withClient((client) => client.listDrafts(page, { limit, fields, includeBody })),
+      withClient((client) =>
+        client.listDrafts(page, { limit, fields, includeBody }),
+      ),
   );
 
   server.registerTool(
-    'note_get_note',
+    "note_get_note",
     {
-      title: 'Get note.com note',
-      description: 'Fetches a note by note key, e.g. n1a0b26f944f4.',
+      title: "Get note.com note",
+      description: "Fetches a note by note key, e.g. n1a0b26f944f4.",
       inputSchema: {
         noteKey: z.string().min(1),
       },
@@ -195,11 +222,11 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_get_draft',
+    "note_get_draft",
     {
-      title: 'Get note.com draft detail',
+      title: "Get note.com draft detail",
       description:
-        'Fetches an authenticated draft detail by note key via GET /v3/notes/{noteKey}?draft=true&draft_reedit=false. Use note_list_drafts to find the draft key first.',
+        "Fetches an authenticated draft detail by note key via GET /v3/notes/{noteKey}?draft=true&draft_reedit=false. Use note_list_drafts to find the draft key first.",
       inputSchema: {
         noteKey: z.string().min(1),
       },
@@ -208,9 +235,9 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_create_draft',
+    "note_create_draft",
     {
-      title: 'Create note.com draft',
+      title: "Create note.com draft",
       description:
         'Creates a note.com draft with title/body/hashtags using an unofficial internal API. The body should be HTML compatible with note.com editor content. Do not pass Markdown if visual formatting is expected; convert Markdown to HTML before calling this tool. By default returns an LLM-friendly summary with id/noteId/key/noteKey/editUrl/publicUrl/nextActions; pass responseFormat: "full" for the raw API payload.',
       inputSchema: {
@@ -232,9 +259,9 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_update_draft',
+    "note_update_draft",
     {
-      title: 'Update note.com draft',
+      title: "Update note.com draft",
       description:
         'Updates a note.com draft by numeric draft/note id via POST /v1/text_notes/draft_save?id={draftId}&is_temp_saved=true. The body should be HTML compatible with note.com editor content. Do not pass Markdown if visual formatting is expected; convert Markdown to HTML before calling this tool. By default returns a compact summary; pass responseFormat: "full" for the raw API payload.',
       inputSchema: {
@@ -258,9 +285,9 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_publish_draft',
+    "note_publish_draft",
     {
-      title: 'Publish note.com draft',
+      title: "Publish note.com draft",
       description:
         'Publicly publishes a draft by note key. Internally fetches draft detail via /v3/notes/{noteKey}?draft=true, then publishes with PUT /v1/text_notes/{id}. The saved draft body is sent to note.com as editor HTML; Markdown is not converted during publish. By default returns an LLM-friendly summary with status/key/noteUrl/eyecatch/publishedAt; pass responseFormat: "full" for the raw API payload.',
       inputSchema: {
@@ -273,9 +300,9 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_upload_eyecatch',
+    "note_upload_eyecatch",
     {
-      title: 'Upload note.com eyecatch image',
+      title: "Upload note.com eyecatch image",
       description:
         'Uploads an eyecatch/cover image for a note via POST /v1/image_upload/note_eyecatch. Use draft.id returned by note_create_draft as noteId; this can be called before publishing. Provide the numeric noteId and either imagePath or imageUrl. note.com recommends 1280x670px; width/height default to 1280/670. By default returns noteId and eyecatchUrl; pass responseFormat: "full" for the raw API payload.',
       inputSchema: {
@@ -289,7 +316,7 @@ async function runMcpServer(): Promise<void> {
     },
     async ({ noteId, imagePath, imageUrl, width, height, responseFormat }) => {
       if (!imagePath && !imageUrl) {
-        return errorResult(new Error('imagePath or imageUrl is required'));
+        return errorResult(new Error("imagePath or imageUrl is required"));
       }
       return withClient((client) =>
         client.uploadEyecatch({
@@ -305,11 +332,11 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_delete_draft',
+    "note_delete_draft",
     {
-      title: 'Delete note.com draft',
+      title: "Delete note.com draft",
       description:
-        'Deletes a note.com draft by numeric draft/note id via DELETE /v1/text_notes/draft_delete?id={draftId}. note keys like n... are not accepted by this endpoint; use the id field from note_create_draft, note_list_drafts full output, or note_get_draft.',
+        "Deletes a note.com draft by numeric draft/note id via DELETE /v1/text_notes/draft_delete?id={draftId}. note keys like n... are not accepted by this endpoint; use the id field from note_create_draft, note_list_drafts full output, or note_get_draft.",
       inputSchema: {
         draftId: z.string().min(1),
       },
@@ -318,11 +345,11 @@ async function runMcpServer(): Promise<void> {
   );
 
   server.registerTool(
-    'note_delete_note',
+    "note_delete_note",
     {
-      title: 'Delete note.com note',
+      title: "Delete note.com note",
       description:
-        'Deletes a published or deleted-capable note by note key via DELETE /v1/notes/n/{noteKey}. This is destructive; use only when the caller explicitly wants deletion.',
+        "Deletes a published or deleted-capable note by note key via DELETE /v1/notes/n/{noteKey}. This is destructive; use only when the caller explicitly wants deletion.",
       inputSchema: {
         noteKey: z.string().min(1),
       },
@@ -351,7 +378,7 @@ function result(value: JsonValue) {
   return {
     content: [
       {
-        type: 'text' as const,
+        type: "text" as const,
         text: jsonText(value),
       },
     ],
@@ -363,7 +390,7 @@ function errorResult(error: unknown) {
     isError: true,
     content: [
       {
-        type: 'text' as const,
+        type: "text" as const,
         text: jsonText(errorDetail(error)),
       },
     ],
@@ -373,20 +400,20 @@ function errorResult(error: unknown) {
 function errorDetail(error: unknown): JsonValue {
   if (error instanceof AuthRequiredError) {
     return {
-      error: 'auth_required',
+      error: "auth_required",
       message: error.message,
-      suggestedTools: ['note_auth_login', 'note_set_cookie'],
+      suggestedTools: ["note_auth_login", "note_set_cookie"],
     };
   }
 
   if (error instanceof NoteApiError) {
     return {
-      error: 'note_api_error',
+      error: "note_api_error",
       message: error.message,
       status: error.status,
       body: error.body as JsonValue,
     };
   }
 
-  return { error: 'error', message: toErrorMessage(error) };
+  return { error: "error", message: toErrorMessage(error) };
 }

@@ -1,7 +1,7 @@
-import { readFile } from 'node:fs/promises';
-import { basename } from 'node:path';
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 
-import { NoteApiError } from './errors.js';
+import { NoteApiError } from "./errors.js";
 import type {
   DraftPayload,
   FetchLike,
@@ -10,13 +10,13 @@ import type {
   NoteClientOptions,
   PublishDraftOptions,
   UploadEyecatchPayload,
-} from './types.js';
+} from "./types.js";
 
-const BASE_URL = 'https://note.com/api';
-const EDITOR_ORIGIN = 'https://editor.note.com';
-const EDITOR_REFERER = 'https://editor.note.com/';
+const BASE_URL = "https://note.com/api";
+const EDITOR_ORIGIN = "https://editor.note.com";
+const EDITOR_REFERER = "https://editor.note.com/";
 const DEFAULT_USER_AGENT =
-  'note-mcp/0.0.0 (+https://github.com/new-village/note-mcp)';
+  "note-mcp-community/0.0.0 (+https://github.com/new-village/note-mcp-community)";
 
 export class NoteClient {
   private readonly cookie: string;
@@ -30,24 +30,32 @@ export class NoteClient {
   }
 
   async authCheck(): Promise<JsonValue> {
-    return this.request('/v3/notice_counts');
+    return this.request("/v3/notice_counts");
   }
 
-  async listMyNotes(page = 1, options: ListMyNotesOptions = {}): Promise<JsonValue> {
+  async listMyNotes(
+    page = 1,
+    options: ListMyNotesOptions = {},
+  ): Promise<JsonValue> {
     const limit = options.limit ?? 20;
-    const payload = await this.request(`/v2/note_list/contents?limit=${limit}&page=${page}`);
-    if (options.fields === 'summary' || options.includeBody === false) {
+    const payload = await this.request(
+      `/v2/note_list/contents?limit=${limit}&page=${page}`,
+    );
+    if (options.fields === "summary" || options.includeBody === false) {
       return summarizeListPayload(payload);
     }
     return payload;
   }
 
-  async listDrafts(page = 1, options: ListMyNotesOptions = {}): Promise<JsonValue> {
+  async listDrafts(
+    page = 1,
+    options: ListMyNotesOptions = {},
+  ): Promise<JsonValue> {
     const limit = options.limit ?? 20;
     const payload = await this.request(
       `/v2/note_list/contents?limit=${limit}&page=${page}&status=draft&without_magazines=true`,
     );
-    if (options.fields === 'summary' || options.includeBody === false) {
+    if (options.fields === "summary" || options.includeBody === false) {
       return summarizeListPayload(payload);
     }
     return payload;
@@ -63,11 +71,13 @@ export class NoteClient {
     );
   }
 
-  async createDraft(payload: Omit<DraftPayload, 'draftId'>): Promise<JsonValue> {
-    const shell = await this.request('/v1/text_notes', {
-      method: 'POST',
+  async createDraft(
+    payload: Omit<DraftPayload, "draftId">,
+  ): Promise<JsonValue> {
+    const shell = await this.request("/v1/text_notes", {
+      method: "POST",
       body: JSON.stringify({
-        body: '',
+        body: "",
         body_length: 0,
         name: payload.title,
         index: false,
@@ -75,29 +85,46 @@ export class NoteClient {
       }),
     });
     const draft = extractDraft(shell);
-    const save = await this.saveDraft({ ...payload, draftId: String(draft.id), responseFormat: 'full' });
-    if (payload.responseFormat === 'summary') {
+    const save = await this.saveDraft({
+      ...payload,
+      draftId: String(draft.id),
+      responseFormat: "full",
+    });
+    if (payload.responseFormat === "summary") {
       return this.hydratedDraftSummary(draft);
     }
     return { draft, save };
   }
 
-  async updateDraft(payload: DraftPayload & { draftId: string }): Promise<JsonValue> {
+  async updateDraft(
+    payload: DraftPayload & { draftId: string },
+  ): Promise<JsonValue> {
     const save = await this.saveDraft(payload);
-    if (payload.responseFormat === 'summary') {
-      return omitUndefined({ id: payload.draftId, noteId: payload.draftId, status: 'draft', updated: true });
+    if (payload.responseFormat === "summary") {
+      return omitUndefined({
+        id: payload.draftId,
+        noteId: payload.draftId,
+        status: "draft",
+        updated: true,
+      });
     }
     return save;
   }
 
-  async publishDraft(noteKey: string, options: PublishDraftOptions = {}): Promise<JsonValue> {
+  async publishDraft(
+    noteKey: string,
+    options: PublishDraftOptions = {},
+  ): Promise<JsonValue> {
     const draft = await this.getDraft(noteKey);
     const note = extractNoteData(draft);
-    const published = await this.request(`/v1/text_notes/${encodeURIComponent(String(note.id))}`, {
-      method: 'PUT',
-      body: JSON.stringify(publishPayload(note)),
-    });
-    if (options.responseFormat === 'summary') {
+    const published = await this.request(
+      `/v1/text_notes/${encodeURIComponent(String(note.id))}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(publishPayload(note)),
+      },
+    );
+    if (options.responseFormat === "summary") {
       return publishSummary(published, note);
     }
     return published;
@@ -106,34 +133,40 @@ export class NoteClient {
   async uploadEyecatch(payload: UploadEyecatchPayload): Promise<JsonValue> {
     const file = await this.fileFromPayload(payload);
     const form = new FormData();
-    form.append('note_id', payload.noteId);
-    form.append('file', file);
-    form.append('width', String(payload.width ?? 1280));
-    form.append('height', String(payload.height ?? 670));
+    form.append("note_id", payload.noteId);
+    form.append("file", file);
+    form.append("width", String(payload.width ?? 1280));
+    form.append("height", String(payload.height ?? 670));
 
-    const uploaded = await this.request('/v1/image_upload/note_eyecatch', {
-      method: 'POST',
+    const uploaded = await this.request("/v1/image_upload/note_eyecatch", {
+      method: "POST",
       body: form,
     });
-    if (payload.responseFormat === 'summary') {
+    if (payload.responseFormat === "summary") {
       return eyecatchSummary(uploaded, payload);
     }
     return uploaded;
   }
 
   async deleteDraft(draftId: string): Promise<JsonValue> {
-    return this.request(`/v1/text_notes/draft_delete?id=${encodeURIComponent(draftId)}`, {
-      method: 'DELETE',
-    });
+    return this.request(
+      `/v1/text_notes/draft_delete?id=${encodeURIComponent(draftId)}`,
+      {
+        method: "DELETE",
+      },
+    );
   }
 
   async deleteNote(noteKey: string): Promise<JsonValue> {
     return this.request(`/v1/notes/n/${encodeURIComponent(noteKey)}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
-  private async hydratedDraftSummary(draft: { [key: string]: JsonValue; id: string | number }): Promise<JsonValue> {
+  private async hydratedDraftSummary(draft: {
+    [key: string]: JsonValue;
+    id: string | number;
+  }): Promise<JsonValue> {
     const key = firstString(draft.key, draft.noteKey);
     if (!key || urlnameFromUser(draft.user) || firstString(draft.urlname)) {
       return draftSummary(draft);
@@ -150,11 +183,13 @@ export class NoteClient {
     return draftSummary(draft);
   }
 
-  private async saveDraft(payload: DraftPayload & { draftId: string }): Promise<JsonValue> {
+  private async saveDraft(
+    payload: DraftPayload & { draftId: string },
+  ): Promise<JsonValue> {
     return this.request(
       `/v1/text_notes/draft_save?id=${encodeURIComponent(payload.draftId)}&is_temp_saved=true`,
       {
-        method: 'POST',
+        method: "POST",
         body: JSON.stringify({
           body: payload.body,
           body_length: payload.bodyLength ?? textLength(payload.body),
@@ -183,29 +218,34 @@ export class NoteClient {
           null,
         );
       }
-      const filename = basename(new URL(payload.imageUrl).pathname) || 'eyecatch.jpg';
-      const contentType = response.headers.get('content-type') ?? mimeType(filename);
+      const filename =
+        basename(new URL(payload.imageUrl).pathname) || "eyecatch.jpg";
+      const contentType =
+        response.headers.get("content-type") ?? mimeType(filename);
       return new File([body], filename, { type: contentType });
     }
 
-    throw new NoteApiError('imagePath or imageUrl is required', 400, null);
+    throw new NoteApiError("imagePath or imageUrl is required", 400, null);
   }
 
-  private async request(path: string, init: RequestInit = {}): Promise<JsonValue> {
+  private async request(
+    path: string,
+    init: RequestInit = {},
+  ): Promise<JsonValue> {
     const headers = new Headers(init.headers);
-    headers.set('accept', 'application/json');
-    headers.set('cookie', this.cookie);
-    headers.set('user-agent', this.userAgent);
-    headers.set('x-requested-with', 'XMLHttpRequest');
+    headers.set("accept", "application/json");
+    headers.set("cookie", this.cookie);
+    headers.set("user-agent", this.userAgent);
+    headers.set("x-requested-with", "XMLHttpRequest");
 
-    if (typeof init.body === 'string' && !headers.has('content-type')) {
-      headers.set('content-type', 'application/json');
+    if (typeof init.body === "string" && !headers.has("content-type")) {
+      headers.set("content-type", "application/json");
     }
 
     const method = init.method?.toUpperCase();
-    if (method === 'POST' || method === 'PUT') {
-      headers.set('origin', EDITOR_ORIGIN);
-      headers.set('referer', EDITOR_REFERER);
+    if (method === "POST" || method === "PUT") {
+      headers.set("origin", EDITOR_ORIGIN);
+      headers.set("referer", EDITOR_REFERER);
     }
 
     const response = await this.fetchImpl(`${BASE_URL}${path}`, {
@@ -226,27 +266,44 @@ export class NoteClient {
   }
 }
 
-function extractDraft(payload: JsonValue): { [key: string]: JsonValue; id: string | number } {
+function extractDraft(payload: JsonValue): {
+  [key: string]: JsonValue;
+  id: string | number;
+} {
   if (isJsonObject(payload) && isJsonObject(payload.data)) {
     const id = payload.data.id;
-    if (typeof id === 'number' || typeof id === 'string') {
+    if (typeof id === "number" || typeof id === "string") {
       return { ...payload.data, id };
     }
   }
-  throw new NoteApiError('note.com draft shell response did not include data.id', 502, payload);
+  throw new NoteApiError(
+    "note.com draft shell response did not include data.id",
+    502,
+    payload,
+  );
 }
 
-function extractNoteData(payload: JsonValue): { [key: string]: JsonValue; id: string | number } {
+function extractNoteData(payload: JsonValue): {
+  [key: string]: JsonValue;
+  id: string | number;
+} {
   if (isJsonObject(payload) && isJsonObject(payload.data)) {
     const id = payload.data.id;
-    if (typeof id === 'number' || typeof id === 'string') {
+    if (typeof id === "number" || typeof id === "string") {
       return { ...payload.data, id };
     }
   }
-  throw new NoteApiError('note.com note response did not include data.id', 502, payload);
+  throw new NoteApiError(
+    "note.com note response did not include data.id",
+    502,
+    payload,
+  );
 }
 
-function draftSummary(draft: { [key: string]: JsonValue; id: string | number }): JsonValue {
+function draftSummary(draft: {
+  [key: string]: JsonValue;
+  id: string | number;
+}): JsonValue {
   const key = firstString(draft.key, draft.noteKey);
   const urlname = firstString(draft.urlname) ?? urlnameFromUser(draft.user);
   return omitUndefined({
@@ -256,13 +313,13 @@ function draftSummary(draft: { [key: string]: JsonValue; id: string | number }):
     noteKey: key,
     editUrl: key ? `https://note.com/notes/${key}/edit` : undefined,
     publicUrl:
-      noteUrl(key, draft.user, 'published') ??
+      noteUrl(key, draft.user, "published") ??
       (urlname && key ? `https://note.com/${urlname}/n/${key}` : undefined),
-    status: 'draft',
+    status: "draft",
     nextActions: key
       ? {
-          uploadEyecatch: { tool: 'note_upload_eyecatch', noteId: draft.id },
-          publish: { tool: 'note_publish_draft', noteKey: key },
+          uploadEyecatch: { tool: "note_upload_eyecatch", noteId: draft.id },
+          publish: { tool: "note_publish_draft", noteKey: key },
         }
       : undefined,
   });
@@ -272,9 +329,17 @@ function publishSummary(
   published: JsonValue,
   fallbackNote: { [key: string]: JsonValue; id: string | number },
 ): JsonValue {
-  const data = isJsonObject(published) && isJsonObject(published.data) ? published.data : published;
+  const data =
+    isJsonObject(published) && isJsonObject(published.data)
+      ? published.data
+      : published;
   const source = isJsonObject(data) ? data : {};
-  const key = firstString(source.key, source.noteKey, fallbackNote.key, fallbackNote.noteKey);
+  const key = firstString(
+    source.key,
+    source.noteKey,
+    fallbackNote.key,
+    fallbackNote.noteKey,
+  );
   const user = source.user ?? fallbackNote.user;
   const eyecatch = firstString(
     source.eyecatch,
@@ -285,10 +350,10 @@ function publishSummary(
     fallbackNote.eyecatch_url,
   );
   return omitUndefined({
-    status: firstString(source.status) ?? 'published',
+    status: firstString(source.status) ?? "published",
     key,
     noteKey: key,
-    noteUrl: noteUrl(key, user, 'published'),
+    noteUrl: noteUrl(key, user, "published"),
     eyecatch,
     publishedAt: firstDefined(
       source.publishedAt,
@@ -303,8 +368,14 @@ function publishSummary(
   });
 }
 
-function eyecatchSummary(uploaded: JsonValue, payload: UploadEyecatchPayload): JsonValue {
-  const data = isJsonObject(uploaded) && isJsonObject(uploaded.data) ? uploaded.data : uploaded;
+function eyecatchSummary(
+  uploaded: JsonValue,
+  payload: UploadEyecatchPayload,
+): JsonValue {
+  const data =
+    isJsonObject(uploaded) && isJsonObject(uploaded.data)
+      ? uploaded.data
+      : uploaded;
   const source = isJsonObject(data) ? data : {};
   const url = firstString(source.url, source.eyecatchUrl, source.eyecatch_url);
   return omitUndefined({
@@ -316,17 +387,25 @@ function eyecatchSummary(uploaded: JsonValue, payload: UploadEyecatchPayload): J
   });
 }
 
-function publishPayload(note: { [key: string]: JsonValue; id: string | number }): { [key: string]: JsonValue } {
-  const body = firstString(note.body) ?? '';
+function publishPayload(note: {
+  [key: string]: JsonValue;
+  id: string | number;
+}): { [key: string]: JsonValue } {
+  const body = firstString(note.body) ?? "";
   return {
     author_ids: [],
     body_length: textLength(body),
-    disable_comment: Boolean(note.disableComment ?? note.disable_comment ?? false),
-    exclude_from_creator_top: Boolean(note.excludeFromCreatorTop ?? note.exclude_from_creator_top ?? false),
+    disable_comment: Boolean(
+      note.disableComment ?? note.disable_comment ?? false,
+    ),
+    exclude_from_creator_top: Boolean(
+      note.excludeFromCreatorTop ?? note.exclude_from_creator_top ?? false,
+    ),
     exclude_ai_learning_reward: Boolean(
       note.excludeAiLearningReward ?? note.exclude_ai_learning_reward ?? false,
     ),
-    translation_setting: note.translationSetting ?? note.translation_setting ?? null,
+    translation_setting:
+      note.translationSetting ?? note.translation_setting ?? null,
     free_body: body,
     hashtags: [],
     image_keys: [],
@@ -335,14 +414,17 @@ function publishPayload(note: { [key: string]: JsonValue; id: string | number })
     limited: false,
     magazine_ids: [],
     magazine_keys: [],
-    name: firstString(note.name) ?? '',
-    pay_body: '',
-    price: typeof note.price === 'number' ? note.price : 0,
-    send_notifications_flag: Boolean(note.sendNotificationsFlag ?? note.send_notifications_flag ?? false),
+    name: firstString(note.name) ?? "",
+    pay_body: "",
+    price: typeof note.price === "number" ? note.price : 0,
+    send_notifications_flag: Boolean(
+      note.sendNotificationsFlag ?? note.send_notifications_flag ?? false,
+    ),
     separator: note.separator ?? null,
     slug: note.slug ?? null,
-    status: 'published',
-    stock_photo_image_id: note.stockPhotoImageId ?? note.stock_photo_image_id ?? null,
+    status: "published",
+    stock_photo_image_id:
+      note.stockPhotoImageId ?? note.stock_photo_image_id ?? null,
     owner_urlname: null,
     circle_permissions: null,
     discount_campaigns: [],
@@ -355,16 +437,16 @@ function publishPayload(note: { [key: string]: JsonValue; id: string | number })
 
 function mimeType(filename: string): string {
   const lower = filename.toLowerCase();
-  if (lower.endsWith('.png')) return 'image/png';
-  if (lower.endsWith('.webp')) return 'image/webp';
-  if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
-  return 'application/octet-stream';
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  return "application/octet-stream";
 }
 
 function textLength(html: string): number {
   return html
-    .replace(/<[^>]*>/g, '')
-    .replace(/&nbsp;/g, ' ')
+    .replace(/<[^>]*>/g, "")
+    .replace(/&nbsp;/g, " ")
     .trim().length;
 }
 
@@ -409,20 +491,32 @@ function summarizeNoteItem(item: JsonValue): JsonValue {
     key,
     title: firstString(item.title, item.name),
     url:
-      firstString(item.url, item.noteUrl, item.note_url, item.path) ?? noteUrl(key, item.user, item.status),
-    publishAt: firstDefined(item.publishAt, item.publish_at, item.publishedAt, item.published_at),
+      firstString(item.url, item.noteUrl, item.note_url, item.path) ??
+      noteUrl(key, item.user, item.status),
+    publishAt: firstDefined(
+      item.publishAt,
+      item.publish_at,
+      item.publishedAt,
+      item.published_at,
+    ),
     status: item.status,
     likeCount: firstDefined(item.likeCount, item.like_count),
     isAuthor: item.isAuthor,
   });
 }
 
-function firstDefined(...values: Array<JsonValue | undefined>): JsonValue | undefined {
+function firstDefined(
+  ...values: Array<JsonValue | undefined>
+): JsonValue | undefined {
   return values.find((value) => value !== undefined);
 }
 
-function firstString(...values: Array<JsonValue | undefined>): string | undefined {
-  return values.find((value): value is string => typeof value === 'string' && value.length > 0);
+function firstString(
+  ...values: Array<JsonValue | undefined>
+): string | undefined {
+  return values.find(
+    (value): value is string => typeof value === "string" && value.length > 0,
+  );
 }
 
 function urlnameFromUser(user: JsonValue | undefined): string | undefined {
@@ -434,7 +528,7 @@ function noteUrl(
   user: JsonValue | undefined,
   status: JsonValue | undefined,
 ): string | undefined {
-  if (!key || status === 'draft') return undefined;
+  if (!key || status === "draft") return undefined;
   if (isJsonObject(user)) {
     const urlname = firstString(user.urlname);
     if (urlname) return `https://note.com/${urlname}/n/${key}`;
@@ -442,14 +536,18 @@ function noteUrl(
   return `https://note.com/notes/${key}`;
 }
 
-function omitUndefined(record: Record<string, JsonValue | undefined>): { [key: string]: JsonValue } {
+function omitUndefined(record: Record<string, JsonValue | undefined>): {
+  [key: string]: JsonValue;
+} {
   return Object.fromEntries(
-    Object.entries(record).filter((entry): entry is [string, JsonValue] => entry[1] !== undefined),
+    Object.entries(record).filter(
+      (entry): entry is [string, JsonValue] => entry[1] !== undefined,
+    ),
   );
 }
 
 function isJsonObject(value: unknown): value is { [key: string]: JsonValue } {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 async function parseBody(response: Response): Promise<JsonValue> {

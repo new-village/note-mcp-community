@@ -1,10 +1,10 @@
 {
-  "name": "note-mcp",
-  "version": "1.5.0",
-  "description": "Unofficial stdio MCP server for note.com using cookie-based internal APIs.",
+  "name": "note-mcp-community",
+  "version": "1.0.0",
+  "description": "Unofficial, community-maintained stdio MCP server for note.com using cookie-based internal APIs.",
   "type": "module",
   "bin": {
-    "note-mcp": "dist/index.js"
+    "note-mcp-community": "dist/index.js"
   },
   "files": [
     "dist",
@@ -27,18 +27,19 @@
     "model-context-protocol",
     "note",
     "note.com",
-    "stdio"
+    "stdio",
+    "community"
   ],
   "author": "new-village",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/new-village/note-mcp.git"
+    "url": "git+https://github.com/new-village/note-mcp-community.git"
   },
   "bugs": {
-    "url": "https://github.com/new-village/note-mcp/issues"
+    "url": "https://github.com/new-village/note-mcp-community/issues"
   },
-  "homepage": "https://github.com/new-village/note-mcp#readme",
+  "homepage": "https://github.com/new-village/note-mcp-community#readme",
   "publishConfig": {
     "access": "public"
   },

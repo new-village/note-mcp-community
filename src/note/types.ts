@@ -6,7 +6,10 @@ export type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 
-export type FetchLike = (input: string | URL, init?: RequestInit) => Promise<Response>;
+export type FetchLike = (
+  input: string | URL,
+  init?: RequestInit,
+) => Promise<Response>;
 
 export interface NoteClientOptions {
   cookie: string;
@@ -23,7 +26,7 @@ export interface DraftPayload {
   responseFormat?: ResponseFormat;
 }
 
-export type ResponseFormat = 'summary' | 'full';
+export type ResponseFormat = "summary" | "full";
 
 export interface PublishDraftOptions {
   responseFormat?: ResponseFormat;
@@ -39,7 +42,7 @@ export interface UploadEyecatchPayload {
 }
 
 export interface ListMyNotesOptions {
-  fields?: 'full' | 'summary';
+  fields?: "full" | "summary";
   includeBody?: boolean | undefined;
   limit?: number | undefined;
 }

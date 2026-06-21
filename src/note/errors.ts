@@ -5,7 +5,7 @@ export class NoteApiError extends Error {
     readonly body: unknown,
   ) {
     super(message);
-    this.name = 'NoteApiError';
+    this.name = "NoteApiError";
   }
 }
 

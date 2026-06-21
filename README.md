@@ -1,6 +1,6 @@
-# note-mcp
+# note-mcp-community
 
-Unofficial stdio MCP server for note.com. It uses cookie-based access to note.com's internal APIs.
+Unofficial, community-maintained stdio MCP server for note.com. It uses cookie-based access to note.com's internal APIs.
 
 > [!WARNING]
 > This project is unofficial and not affiliated with note.com. Internal APIs can change without notice. Keep cookies local and never commit them to GitHub, npm, logs, or issue reports.
@@ -12,18 +12,18 @@ Unofficial stdio MCP server for note.com. It uses cookie-based access to note.co
 Use browser login first:
 
 ```bash
-npx note-mcp auth
+npx note-mcp-community auth
 ```
 
-After you log in to note.com in the opened browser, `note-mcp` saves the cookie locally and prints the saved file path:
+After you log in to note.com in the opened browser, `note-mcp-community` saves the cookie locally and prints the saved file path:
 
 ```json
 {
   "authenticated": true,
   "saved": true,
-  "configPath": "/Users/you/.config/note-mcp/config.json",
+  "configPath": "/Users/you/.config/note-mcp-community/config.json",
   "cookiePreview": "fp=b…5948",
-  "message": "note.com authentication configured from browser login. Cookie saved to /Users/you/.config/note-mcp/config.json."
+  "message": "note.com authentication configured from browser login. Cookie saved to /Users/you/.config/note-mcp-community/config.json."
 }
 ```
 
@@ -34,7 +34,7 @@ Then configure your MCP client without putting cookies in the config:
   "mcpServers": {
     "note": {
       "command": "npx",
-      "args": ["-y", "note-mcp"]
+      "args": ["-y", "note-mcp-community"]
     }
   }
 }
@@ -44,9 +44,9 @@ Some MCP clients only load newly added tools when a process or conversation star
 
 Quick setup check:
 
-1. `npx note-mcp auth`
-2. `npx note-mcp auth --status`
-3. Add `npx -y note-mcp` to your MCP client config
+1. `npx note-mcp-community auth`
+2. `npx note-mcp-community auth --status`
+3. Add `npx -y note-mcp-community` to your MCP client config
 4. Restart the client or open a new thread/session
 5. Run `note_auth_status` from the MCP client
 
@@ -55,22 +55,22 @@ Quick setup check:
 Do not rely on browser login in headless/container environments. Provide a cookie through env or a mounted config file instead:
 
 ```bash
-NOTE_COOKIE='your note.com Cookie header' npx note-mcp
+NOTE_COOKIE='your note.com Cookie header' npx note-mcp-community
 ```
 
-Or mount a config file and point `NOTE_MCP_CONFIG` at it:
+Or mount a config file and point `NOTE_MCP_COMMUNITY_CONFIG` at it:
 
 ```bash
 docker run \
-  -v ~/.config/note-mcp/config.json:/run/secrets/note-mcp-config.json:ro \
-  -e NOTE_MCP_CONFIG=/run/secrets/note-mcp-config.json \
+  -v ~/.config/note-mcp-community/config.json:/run/secrets/note-mcp-community-config.json:ro \
+  -e NOTE_MCP_COMMUNITY_CONFIG=/run/secrets/note-mcp-community-config.json \
   your-agent-image
 ```
 
 ## Install / run
 
 ```bash
-npx note-mcp
+npx note-mcp-community
 ```
 
 For local development:
@@ -83,14 +83,14 @@ node dist/index.js
 
 ## MCP client configuration
 
-Recommended desktop setup after `npx note-mcp auth`:
+Recommended desktop setup after `npx note-mcp-community auth`:
 
 ```json
 {
   "mcpServers": {
     "note": {
       "command": "npx",
-      "args": ["-y", "note-mcp"]
+      "args": ["-y", "note-mcp-community"]
     }
   }
 }
@@ -103,7 +103,7 @@ Advanced env-based setup:
   "mcpServers": {
     "note": {
       "command": "npx",
-      "args": ["-y", "note-mcp"],
+      "args": ["-y", "note-mcp-community"],
       "env": {
         "NOTE_COOKIE": "your note.com Cookie header"
       }
@@ -114,19 +114,19 @@ Advanced env-based setup:
 
 ### Codex CLI
 
-For Codex, add `note-mcp` as a stdio MCP server with `npx`:
+For Codex, add `note-mcp-community` as a stdio MCP server with `npx`:
 
 ```bash
-codex mcp add note -- npx -y note-mcp
+codex mcp add note -- npx -y note-mcp-community
 codex mcp list
-npx -y note-mcp auth --status
+npx -y note-mcp-community auth --status
 ```
 
 Recommended verification flow:
 
-1. `npx note-mcp auth`
-2. `npx note-mcp auth --status`
-3. `codex mcp add note -- npx -y note-mcp`
+1. `npx note-mcp-community auth`
+2. `npx note-mcp-community auth --status`
+3. `codex mcp add note -- npx -y note-mcp-community`
 4. Restart Codex or create a new thread
 5. Run `note_auth_status`
 
@@ -134,7 +134,7 @@ If the server is listed but `note_*` tools are not available in the current thre
 
 ## Authentication
 
-`note-mcp` supports two authentication paths.
+`note-mcp-community` supports two authentication paths.
 
 ### 1. Local/desktop: browser login
 
@@ -145,13 +145,13 @@ For local desktop agents, ask the agent to call:
 Or run it directly:
 
 ```bash
-npx note-mcp auth
+npx note-mcp-community auth
 ```
 
 This opens a browser, lets you log in to note.com normally, then stores note.com cookies in:
 
 ```text
-~/.config/note-mcp/config.json
+~/.config/note-mcp-community/config.json
 ```
 
 The CLI and MCP tool response include the actual `configPath` used.
@@ -162,7 +162,7 @@ If the browser executable is not installed yet, install Playwright's Chromium on
 npx playwright install chromium
 ```
 
-When using `note-mcp` only through `npx` and Playwright is not otherwise installed globally/in the project, this form is often more reliable:
+When using `note-mcp-community` only through `npx` and Playwright is not otherwise installed globally/in the project, this form is often more reliable:
 
 ```bash
 npx -p playwright playwright install chromium
@@ -173,10 +173,10 @@ For remote servers, containers, or CI, prefer the secret/env/config-file path be
 Useful CLI commands:
 
 ```bash
-npx note-mcp auth --status
-npx note-mcp auth --clear
-npx note-mcp auth --headless
-npx note-mcp auth --headed
+npx note-mcp-community auth --status
+npx note-mcp-community auth --clear
+npx note-mcp-community auth --headless
+npx note-mcp-community auth --headed
 ```
 
 ### 2. Advanced/server/CI: secret, env, or config file
@@ -185,7 +185,7 @@ For remote agents, servers, containers, CI, and secret managers, provide a Cooki
 
 - `NOTE_COOKIE`
 - `NOTE_SESSION_COOKIE`
-- `NOTE_MCP_CONFIG` pointing to a config JSON file
+- `NOTE_MCP_COMMUNITY_CONFIG` pointing to a config JSON file
 - MCP tool `note_set_cookie`
 
 Example config file:
@@ -206,13 +206,13 @@ Cookie lookup priority:
 Default config path:
 
 ```text
-~/.config/note-mcp/config.json
+~/.config/note-mcp-community/config.json
 ```
 
 Override config path:
 
 ```bash
-NOTE_MCP_CONFIG=/path/to/config.json npx note-mcp
+NOTE_MCP_COMMUNITY_CONFIG=/path/to/config.json npx note-mcp-community
 ```
 
 ## Tools
@@ -264,7 +264,7 @@ Do not pass Markdown if visual formatting is expected:
 - 公開
 ```
 
-AI agents should generate or convert content to note-compatible HTML before calling the tool. `note-mcp` intentionally stays a thin bridge to note.com's API; Markdown-to-HTML conversion belongs in the caller or a future optional helper, not in the core draft tools.
+AI agents should generate or convert content to note-compatible HTML before calling the tool. `note-mcp-community` intentionally stays a thin bridge to note.com's API; Markdown-to-HTML conversion belongs in the caller or a future optional helper, not in the core draft tools.
 
 Recommended body HTML:
 
@@ -311,7 +311,7 @@ Releases are handled by GitHub Actions + semantic-release.
 - GitHub Actions runs CI.
 - The release workflow creates GitHub tags/releases and publishes to npm.
 
-npm publishing uses npm Trusted Publishing with GitHub Actions OIDC. Configure `new-village/note-mcp` and `.github/workflows/release.yml` as a trusted publisher on npmjs.com. No `NPM_TOKEN` repository secret is required.
+npm publishing uses npm Trusted Publishing with GitHub Actions OIDC. Configure `new-village/note-mcp-community` and `.github/workflows/release.yml` as a trusted publisher on npmjs.com. No `NPM_TOKEN` repository secret is required.
 
 ## Development
 
