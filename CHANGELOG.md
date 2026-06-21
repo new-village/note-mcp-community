@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/new-village/note-mcp/compare/v1.1.1...v1.1.2) (2026-06-21)
+
+
+### Bug Fixes
+
+* show auth config path ([2f658e8](https://github.com/new-village/note-mcp/commit/2f658e8121db9755db7f6f2bee38f4704f980f5c))
+
 ## [1.1.1](https://github.com/new-village/note-mcp/compare/v1.1.0...v1.1.1) (2026-06-21)
 
 
