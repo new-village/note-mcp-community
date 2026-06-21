@@ -12,7 +12,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --clean",
+    "build": "tsup src/index.ts --format esm --dts --clean --external playwright",
     "dev": "tsx src/index.ts",
     "lint": "eslint .",
     "format": "prettier --check .",
@@ -61,5 +61,8 @@
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.61.1",
     "vitest": "^4.1.9"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.61.0"
   }
 }

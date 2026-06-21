@@ -8,6 +8,12 @@ Unofficial stdio MCP server for note.com. It uses cookie-based access to note.co
 ## Install / run
 
 ```bash
+npx note-mcp
+```
+
+For advanced/server setups, you can still provide a Cookie header through the environment:
+
+```bash
 NOTE_COOKIE='your note.com cookie string' npx note-mcp
 ```
 
@@ -16,12 +22,25 @@ For local development:
 ```bash
 npm install
 npm run build
-NOTE_COOKIE='your note.com cookie string' node dist/index.js
+node dist/index.js
 ```
 
 ## MCP client configuration
 
-Example:
+Desktop/local browser-login friendly setup:
+
+```json
+{
+  "mcpServers": {
+    "note": {
+      "command": "npx",
+      "args": ["-y", "note-mcp"]
+    }
+  }
+}
+```
+
+Advanced env-based setup:
 
 ```json
 {
@@ -37,14 +56,83 @@ Example:
 }
 ```
 
+## Authentication
+
+`note-mcp` supports two authentication paths.
+
+### 1. Local/desktop: browser login
+
+For local desktop agents, ask the agent to call:
+
+- `note_auth_login`
+
+Or run it directly:
+
+```bash
+npx note-mcp auth
+```
+
+This opens a browser, lets you log in to note.com normally, then stores note.com cookies in:
+
+```text
+~/.config/note-mcp/config.json
+```
+
+The config file is written with `0600` permissions where supported.
+
+Useful CLI commands:
+
+```bash
+npx note-mcp auth --status
+npx note-mcp auth --clear
+npx note-mcp auth --headless
+npx note-mcp auth --headed
+```
+
+### 2. Advanced/server/CI: secret, env, or config file
+
+For remote agents, servers, CI, and secret managers, provide a Cookie header via:
+
+- `NOTE_COOKIE`
+- `NOTE_SESSION_COOKIE`
+- `NOTE_MCP_CONFIG` pointing to a config JSON file
+- MCP tool `note_set_cookie`
+
+Example config file:
+
+```json
+{
+  "cookie": "your note.com Cookie header",
+  "updatedAt": "2026-06-21T00:00:00.000Z"
+}
+```
+
+Cookie lookup priority:
+
+1. `NOTE_COOKIE`
+2. `NOTE_SESSION_COOKIE`
+3. config file cookie
+
 ## Tools
 
-- `note_auth_check` — verify cookie-based access to note.com internal APIs
+Authentication/setup tools:
+
+- `note_auth_status` — inspect whether auth is configured
+- `note_auth_login` — open a browser login flow and save cookies locally
+- `note_set_cookie` — save a Cookie header to the local config file, optionally verifying it first
+- `note_clear_cookie` — delete the stored config-file cookie
+- `note_login_help` — explain supported setup paths
+
+note.com tools:
+
+- `note_auth_check` — verify configured cookie-based access to note.com internal APIs
 - `note_list_my_notes` — list notes for the authenticated account
 - `note_list_drafts` — list drafts for the authenticated account
 - `note_get_note` — fetch a note by note key, e.g. `n1a0b26f944f4`
 - `note_create_draft` — create a draft
 - `note_update_draft` — update a draft by draft id
+
+If authentication is missing, note tools return an `auth_required` error suggesting `note_auth_login` or `note_set_cookie`.
 
 ## API basis
 
@@ -59,15 +147,6 @@ Known endpoint basis:
 - Own contents: `GET /v2/creators/info/contents?kind=note&page=1`
 - Draft save: `POST /v1/text_notes/draft_save?id={draftId}`
 - Auth smoke test: `GET /v3/notice_counts`
-
-## Authentication
-
-Set one of these environment variables before launching the server:
-
-- `NOTE_COOKIE`
-- `NOTE_SESSION_COOKIE`
-
-Use the full Cookie header value from an authenticated browser session.
 
 ## Release
 
