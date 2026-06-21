@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { cookiesToHeader, toBrowserLoginError } from '../src/note/browser-login.js';
+import {
+  buildBrowserLoginResult,
+  cookiesToHeader,
+  toBrowserLoginError,
+} from '../src/note/browser-login.js';
 
 describe('cookiesToHeader', () => {
   it('serializes note.com cookies into a Cookie header', () => {
@@ -31,5 +35,23 @@ describe('toBrowserLoginError', () => {
     expect(error.message).toContain('Playwright browser is not installed');
     expect(error.message).toContain('npx playwright install chromium');
     expect(error.message).not.toContain('/Users/new-village');
+  });
+});
+
+describe('buildBrowserLoginResult', () => {
+  it('includes the config file path when the cookie is saved', () => {
+    expect(
+      buildBrowserLoginResult('fp=browser-cookie-value', true, {
+        configPath: '/Users/kazu/.config/note-mcp/config.json',
+        cookiePreview: 'fp=b…alue',
+      }),
+    ).toEqual({
+      authenticated: true,
+      saved: true,
+      configPath: '/Users/kazu/.config/note-mcp/config.json',
+      cookiePreview: 'fp=b…alue',
+      message:
+        'note.com authentication configured from browser login. Cookie saved to /Users/kazu/.config/note-mcp/config.json.',
+    });
   });
 });

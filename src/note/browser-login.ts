@@ -1,4 +1,4 @@
-import { saveCookie } from './auth.js';
+import { saveCookie, type AuthStatus } from './auth.js';
 import { NoteClient } from './client.js';
 import type { JsonValue } from './types.js';
 
@@ -19,6 +19,7 @@ export interface BrowserLoginResult extends Record<string, JsonValue> {
   saved: boolean;
   cookiePreview: string;
   message: string;
+  configPath?: string;
 }
 
 export function cookiesToHeader(cookies: BrowserCookie[]): string {
@@ -55,15 +56,9 @@ export async function runBrowserLogin(options: BrowserLoginOptions = {}): Promis
       const client = new NoteClient({ cookie });
       try {
         await client.authCheck();
-        if (options.save ?? true) {
-          await saveCookie(cookie);
-        }
-        return {
-          authenticated: true,
-          saved: options.save ?? true,
-          cookiePreview: previewCookie(cookie),
-          message: 'note.com authentication configured from browser login.',
-        };
+        const shouldSave = options.save ?? true;
+        const saveStatus = shouldSave ? await saveCookie(cookie) : undefined;
+        return buildBrowserLoginResult(cookie, shouldSave, saveStatus);
       } catch {
         // Keep waiting until the user finishes login or timeout expires.
       }
@@ -87,6 +82,23 @@ async function importPlaywright(): Promise<typeof import('playwright')> {
       `Browser login requires the optional "playwright" package and a usable desktop browser environment. Original error: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
+}
+
+export function buildBrowserLoginResult(
+  cookie: string,
+  saved: boolean,
+  saveStatus?: Pick<AuthStatus, 'configPath' | 'cookiePreview'>,
+): BrowserLoginResult {
+  const configPath = saveStatus?.configPath;
+  return {
+    authenticated: true,
+    saved,
+    ...(configPath ? { configPath } : {}),
+    cookiePreview: saveStatus?.cookiePreview ?? previewCookie(cookie),
+    message: configPath
+      ? `note.com authentication configured from browser login. Cookie saved to ${configPath}.`
+      : 'note.com authentication configured from browser login.',
+  };
 }
 
 export function toBrowserLoginError(error: unknown): Error {

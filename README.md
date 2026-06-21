@@ -5,16 +5,62 @@ Unofficial stdio MCP server for note.com. It uses cookie-based access to note.co
 > [!WARNING]
 > This project is unofficial and not affiliated with note.com. Internal APIs can change without notice. Keep cookies local and never commit them to GitHub, npm, logs, or issue reports.
 
+## Quick start
+
+### Local/desktop agents
+
+Use browser login first:
+
+```bash
+npx note-mcp auth
+```
+
+After you log in to note.com in the opened browser, `note-mcp` saves the cookie locally and prints the saved file path:
+
+```json
+{
+  "authenticated": true,
+  "saved": true,
+  "configPath": "/Users/you/.config/note-mcp/config.json",
+  "cookiePreview": "fp=b…5948",
+  "message": "note.com authentication configured from browser login. Cookie saved to /Users/you/.config/note-mcp/config.json."
+}
+```
+
+Then configure your MCP client without putting cookies in the config:
+
+```json
+{
+  "mcpServers": {
+    "note": {
+      "command": "npx",
+      "args": ["-y", "note-mcp"]
+    }
+  }
+}
+```
+
+### Servers, containers, and CI
+
+Do not rely on browser login in headless/container environments. Provide a cookie through env or a mounted config file instead:
+
+```bash
+NOTE_COOKIE='your note.com Cookie header' npx note-mcp
+```
+
+Or mount a config file and point `NOTE_MCP_CONFIG` at it:
+
+```bash
+docker run \
+  -v ~/.config/note-mcp/config.json:/run/secrets/note-mcp-config.json:ro \
+  -e NOTE_MCP_CONFIG=/run/secrets/note-mcp-config.json \
+  your-agent-image
+```
+
 ## Install / run
 
 ```bash
 npx note-mcp
-```
-
-For advanced/server setups, you can still provide a Cookie header through the environment:
-
-```bash
-NOTE_COOKIE='your note.com cookie string' npx note-mcp
 ```
 
 For local development:
@@ -27,7 +73,7 @@ node dist/index.js
 
 ## MCP client configuration
 
-Desktop/local browser-login friendly setup:
+Recommended desktop setup after `npx note-mcp auth`:
 
 ```json
 {
@@ -49,7 +95,7 @@ Advanced env-based setup:
       "command": "npx",
       "args": ["-y", "note-mcp"],
       "env": {
-        "NOTE_COOKIE": "your note.com cookie string"
+        "NOTE_COOKIE": "your note.com Cookie header"
       }
     }
   }
@@ -78,6 +124,8 @@ This opens a browser, lets you log in to note.com normally, then stores note.com
 ~/.config/note-mcp/config.json
 ```
 
+The CLI and MCP tool response include the actual `configPath` used.
+
 If the browser executable is not installed yet, install Playwright's Chromium once on the same machine/user account, then retry:
 
 ```bash
@@ -92,8 +140,6 @@ npx -p playwright playwright install chromium
 
 For remote servers, containers, or CI, prefer the secret/env/config-file path below instead of browser login.
 
-The config file is written with `0600` permissions where supported.
-
 Useful CLI commands:
 
 ```bash
@@ -105,7 +151,7 @@ npx note-mcp auth --headed
 
 ### 2. Advanced/server/CI: secret, env, or config file
 
-For remote agents, servers, CI, and secret managers, provide a Cookie header via:
+For remote agents, servers, containers, CI, and secret managers, provide a Cookie header via:
 
 - `NOTE_COOKIE`
 - `NOTE_SESSION_COOKIE`
@@ -127,12 +173,24 @@ Cookie lookup priority:
 2. `NOTE_SESSION_COOKIE`
 3. config file cookie
 
+Default config path:
+
+```text
+~/.config/note-mcp/config.json
+```
+
+Override config path:
+
+```bash
+NOTE_MCP_CONFIG=/path/to/config.json npx note-mcp
+```
+
 ## Tools
 
 Authentication/setup tools:
 
-- `note_auth_status` — inspect whether auth is configured
-- `note_auth_login` — open a browser login flow and save cookies locally
+- `note_auth_status` — inspect whether auth is configured and which config path is used
+- `note_auth_login` — open a browser login flow and save cookies locally; response includes `configPath`
 - `note_set_cookie` — save a Cookie header to the local config file, optionally verifying it first
 - `note_clear_cookie` — delete the stored config-file cookie
 - `note_login_help` — explain supported setup paths
