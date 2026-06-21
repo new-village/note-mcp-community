@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/new-village/note-mcp/compare/v1.2.1...v1.2.2) (2026-06-21)
+
+
+### Bug Fixes
+
+* use authenticated note list endpoint ([25f0b0a](https://github.com/new-village/note-mcp/commit/25f0b0aac2e4297a519e2aee4c842a127e4b45a5))
+
 ## [1.2.1](https://github.com/new-village/note-mcp/compare/v1.2.0...v1.2.1) (2026-06-21)
 
 
