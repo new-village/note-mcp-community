@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/new-village/note-mcp/compare/v1.3.2...v1.4.0) (2026-06-21)
+
+
+### Features
+
+* upload note eyecatch images ([b5feb6f](https://github.com/new-village/note-mcp/commit/b5feb6f3d5a9cca292f97ab5dca7dce191f8d614))
+
 ## [1.3.2](https://github.com/new-village/note-mcp/compare/v1.3.1...v1.3.2) (2026-06-21)
 
 
