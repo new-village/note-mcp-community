@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/new-village/note-mcp/compare/v1.2.2...v1.2.3) (2026-06-21)
+
+
+### Bug Fixes
+
+* use current draft list endpoint ([55ce5ce](https://github.com/new-village/note-mcp/commit/55ce5ce346e8d54f3354f1f55b7852c49486fb82))
+
 ## [1.2.2](https://github.com/new-village/note-mcp/compare/v1.2.1...v1.2.2) (2026-06-21)
 
 
