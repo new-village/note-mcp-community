@@ -1,6 +1,6 @@
 {
   "name": "note-mcp-community",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Unofficial, community-maintained stdio MCP server for note.com using cookie-based internal APIs.",
   "type": "module",
   "bin": {
