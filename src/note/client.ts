@@ -466,12 +466,14 @@ export class NoteClient {
 
     const body = await parseBody(response);
     if (!response.ok) {
+      const endpoint = `${BASE_URL}${path}`;
+      const method = init.method?.toUpperCase() ?? "GET";
       throw new NoteApiError(
-        `note.com API request failed: ${response.status} ${response.statusText}`,
+        noteApiErrorMessage(response, path, body),
         response.status,
         {
-          endpoint: `${BASE_URL}${path}`,
-          method: init.method?.toUpperCase() ?? "GET",
+          endpoint,
+          method,
           body,
         },
       );
@@ -479,6 +481,28 @@ export class NoteClient {
 
     return body;
   }
+}
+
+
+function noteApiErrorMessage(
+  response: Response,
+  path: string,
+  body: JsonValue,
+): string {
+  const base = `note.com API request failed: ${response.status} ${response.statusText}`;
+  if (isDraftSaveMissingId(path, body)) {
+    return `${base}. draft_save requires a numeric draft id; use note_create_draft to create a new draft shell first, or pass draftId/noteKey when updating an existing draft.`;
+  }
+  return base;
+}
+
+function isDraftSaveMissingId(path: string, body: JsonValue): boolean {
+  if (!path.startsWith("/v1/text_notes/draft_save")) return false;
+  const id = new URL(path, BASE_URL).searchParams.get("id");
+  if (id) return false;
+  if (!isJsonObject(body)) return false;
+  const error = firstString(body.error, body.message);
+  return error?.toLowerCase().includes("id is missing") ?? false;
 }
 
 function extractDraft(payload: JsonValue): {

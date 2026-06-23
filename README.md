@@ -283,6 +283,17 @@ Avoid:
 - Inline scripts/styles
 - Unsupported custom attributes
 
+## Troubleshooting
+
+### `id is missing` when saving a draft
+
+`POST /v1/text_notes/draft_save` is an update/save endpoint and requires a numeric draft id in the query string. New draft creation should use the two-step editor flow:
+
+1. `POST /v1/text_notes` to create an empty draft shell and read `data.id` / `data.key`.
+2. `POST /v1/text_notes/draft_save?id={draftId}&is_temp_saved=true` to save the title and body.
+
+If an agent reports a fallback from `draft_save` without an id, first check that the running MCP server is using the current package/build and not a cached or stale `npx` install. For existing drafts, call `note_update_draft` with either `draftId` or `noteKey`; do not call `draft_save` as a create endpoint.
+
 ## API basis
 
 The initial endpoints are based on public, unofficial note API references, including:
