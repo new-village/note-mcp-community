@@ -647,6 +647,27 @@ describe("NoteClient", () => {
     );
   });
 
+  it("explains draft_save id is missing responses", async () => {
+    const fetchMock = mockFetch(async () =>
+      response({ error: "id is missing" }, { status: 400, statusText: "Bad Request" }),
+    );
+    const client = new NoteClient({ cookie: "sid=abc", fetch: fetchMock });
+
+    await expect(
+      client.updateDraft({ draftId: "", title: "t", body: "<p>b</p>" }),
+    ).rejects.toMatchObject({
+      message: expect.stringContaining(
+        "draft_save requires a numeric draft id",
+      ),
+      body: {
+        endpoint:
+          "https://note.com/api/v1/text_notes/draft_save?id=&is_temp_saved=true",
+        method: "POST",
+        body: { error: "id is missing" },
+      },
+    });
+  });
+
   it("throws NoteApiError for non-2xx responses", async () => {
     const fetchMock = mockFetch(async () =>
       response({ error: "unauthorized" }, { status: 401 }),
